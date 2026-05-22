@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import api, { setToken } from '../api';
 
 const AuthContext = createContext(null);
@@ -10,9 +10,9 @@ export const AuthProvider = ({ children }) => {
   const [token, setTokenState] = useState(localStorage.getItem(STORAGE_KEY));
   const [user, setUser] = useState(null);
 
-  if (token) {
+  useEffect(() => {
     setToken(token);
-  }
+  }, [token]);
 
   const authenticate = useCallback(async (endpoint, payload) => {
     const response = await api.post(endpoint, payload);
