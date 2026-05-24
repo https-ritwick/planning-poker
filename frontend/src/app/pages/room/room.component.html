@@ -1,0 +1,249 @@
+<div class="room-shell">
+  <!-- ============ Top bar ============ -->
+  <header class="topbar">
+    <div class="topbar-inner container">
+      <div class="tb-left">
+        <div class="logo-sm">
+          <span class="logo-mark-sm">EXL</span>
+          <span class="logo-sub-sm">Planning Poker</span>
+        </div>
+        @if (snapshot(); as snap) {
+          <div class="room-meta">
+            <span class="room-name">{{ snap.room.name }}</span>
+            @if (snap.room.team) { <span class="room-team">· {{ snap.room.team }}</span> }
+          </div>
+        }
+      </div>
+
+      <div class="tb-right">
+        <div class="conn-pill" [class.online]="connected()">
+          <span class="dot" [class.dot-on]="connected()" [class.dot-off]="!connected()"></span>
+          {{ connected() ? 'Live' : 'Reconnecting…' }}
+        </div>
+
+        <button class="room-id-btn mono" (click)="copyRoomId()" title="Copy room ID">
+          # {{ roomId }}
+        </button>
+
+        <button class="btn btn-soft btn-sm" (click)="copyInvite()">🔗 Invite</button>
+
+        <button class="icon-btn" (click)="toggleTheme()" [title]="theme === 'light' ? 'Dark mode' : 'Light mode'">
+          {{ theme === 'light' ? '🌙' : '☀️' }}
+        </button>
+
+        @if (me(); as me) {
+          <div class="me-chip">
+            <div class="me-av" [class.admin]="me.is_admin">{{ me.name.charAt(0).toUpperCase() }}</div>
+            <span class="me-name">{{ me.name }}</span>
+          </div>
+        }
+
+        <button class="icon-btn leave" (click)="confirmLeave()" title="Leave session">⎋</button>
+      </div>
+    </div>
+  </header>
+
+  @if (snapshot(); as snap) {
+    <div class="room-body container">
+      <div class="room-grid">
+        <!-- ============ Left: backlog ============ -->
+        <aside class="col-left col gap-16">
+          <app-story-list
+            [snapshot]="snap"
+            [canManage]="isAdmin()"
+            (select)="selectStory($event)"
+            (remove)="confirmDeleteStory($event)"
+            (addStory)="openStoryModal()"
+          ></app-story-list>
+
+          <div class="card mini-actions card-pad col gap-12">
+            <span class="card-title" style="font-size:13px">📤 Export &amp; summary</span>
+            <button class="btn btn-ghost btn-sm btn-block" (click)="export('json')">Download JSON</button>
+            <button class="btn btn-ghost btn-sm btn-block" (click)="export('csv')">Download CSV</button>
+            <button class="btn btn-ghost btn-sm btn-block" (click)="showSummary.set(true)">View meeting summary</button>
+          </div>
+        </aside>
+
+        <!-- ============ Center: story + voting ============ -->
+        <main class="col-center col gap-16">
+          <app-story-panel [story]="currentStory()"></app-story-panel>
+
+          @if (currentStory()) {
+            <!-- Voting area -->
+            @if (!snap.revealed) {
+              <div class="card card-pad voting-area">
+                <div class="va-header row between center">
+                  <div>
+                    <h3 class="va-title">Cast your estimate</h3>
+                    <p class="muted va-sub">
+                      @if (canVote()) { Pick a card — your vote stays hidden until reveal. }
+                      @else if (me()?.can_vote === false) { You're an observer. Sit back and watch. }
+                      @else { Voting is locked. }
+                    </p>
+                  </div>
+                  <div class="vote-progress">
+                    <span class="vp-num">{{ votedCount(snap) }}/{{ voterCount(snap) }}</span>
+                    <span class="vp-lbl">voted</span>
+                  </div>
+                </div>
+                <div class="va-deck">
+                  <app-voting-cards
+                    [selected]="session.myVote()"
+                    [disabled]="!canVote()"
+                    (vote)="onVote($event)"
+                  ></app-voting-cards>
+                </div>
+              </div>
+            } @else {
+              <app-results-summary
+                [snapshot]="snap"
+                [isAdmin]="isAdmin()"
+                (finalize)="finalize($event)"
+              ></app-results-summary>
+            }
+          }
+        </main>
+
+        <!-- ============ Right: participants + admin ============ -->
+        <aside class="col-right col gap-16">
+          @if (isAdmin()) {
+            <app-admin-controls
+              [snapshot]="snap"
+              (reveal)="reveal()"
+              (reset)="reset()"
+              (startTimer)="startTimer($event)"
+            ></app-admin-controls>
+          }
+          <app-participants-panel
+            [snapshot]="snap"
+            [myId]="me()?.id ?? ''"
+          ></app-participants-panel>
+        </aside>
+      </div>
+    </div>
+  } @else {
+    <!-- Loading state -->
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <p class="muted">Connecting to session…</p>
+    </div>
+  }
+</div>
+
+<!-- ============ Add Story Modal ============ -->
+@if (showStoryModal()) {
+  <div class="modal-backdrop" (click)="showStoryModal.set(false)">
+    <div class="modal card" (click)="$event.stopPropagation()">
+      <div class="card-header">
+        <span class="card-title">➕ Add user story</span>
+        <button class="icon-btn" (click)="showStoryModal.set(false)">✕</button>
+      </div>
+      <div class="card-pad col gap-14">
+        <div class="field">
+          <label>Story title *</label>
+          <input class="input" [(ngModel)]="storyForm.title" placeholder="e.g. As a user, I can reset my password" />
+        </div>
+        <div class="row gap-12">
+          <div class="field grow">
+            <label>Priority</label>
+            <select class="select" [(ngModel)]="storyForm.priority">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div class="field grow">
+            <label>JIRA / Ticket ID</label>
+            <input class="input mono" [(ngModel)]="storyForm.jira_id" placeholder="EXL-123" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea class="textarea" [(ngModel)]="storyForm.description" placeholder="What needs to be built and why…"></textarea>
+        </div>
+        <div class="field">
+          <label>Acceptance criteria</label>
+          <textarea class="textarea" [(ngModel)]="storyForm.acceptance_criteria" placeholder="• Given… When… Then…"></textarea>
+        </div>
+        <div class="row gap-12" style="margin-top:4px">
+          <button class="btn btn-ghost" (click)="showStoryModal.set(false)">Cancel</button>
+          <button class="btn btn-primary grow" (click)="submitStory()">Add to backlog</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ Confirm Modal ============ -->
+@if (showConfirm(); as c) {
+  <div class="modal-backdrop" (click)="showConfirm.set(null)">
+    <div class="modal modal-sm card" (click)="$event.stopPropagation()">
+      <div class="card-pad col gap-16">
+        <div>
+          <h3 style="font-size:18px; margin-bottom:6px">{{ c.title }}</h3>
+          <p class="muted" style="font-size:14px; line-height:1.5">{{ c.message }}</p>
+        </div>
+        <div class="row gap-12">
+          <button class="btn btn-ghost grow" (click)="showConfirm.set(null)">Cancel</button>
+          <button class="btn btn-danger grow" (click)="c.action()">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ============ Meeting Summary Modal ============ -->
+@if (showSummary() && snapshot(); as snap) {
+  <div class="modal-backdrop" (click)="showSummary.set(false)">
+    <div class="modal modal-lg card" (click)="$event.stopPropagation()">
+      <div class="card-header">
+        <span class="card-title">📝 Meeting summary — {{ snap.room.name }}</span>
+        <button class="icon-btn" (click)="showSummary.set(false)">✕</button>
+      </div>
+      <div class="card-pad">
+        <div class="summary-stats">
+          <div class="sum-tile"><div class="st-val">{{ snap.stories.length }}</div><div class="st-lbl">Total stories</div></div>
+          <div class="sum-tile"><div class="st-val">{{ snap.estimated_count }}</div><div class="st-lbl">Estimated</div></div>
+          <div class="sum-tile"><div class="st-val">{{ snap.pending_count }}</div><div class="st-lbl">Pending</div></div>
+          <div class="sum-tile"><div class="st-val">{{ totalPoints(snap) }}</div><div class="st-lbl">Total points</div></div>
+        </div>
+
+        <div class="divider"></div>
+
+        @if (snap.history.length > 0) {
+          <table class="sum-table">
+            <thead>
+              <tr><th>Story</th><th>JIRA</th><th>Avg</th><th>Consensus</th><th>Final</th></tr>
+            </thead>
+            <tbody>
+              @for (h of snap.history; track h.timestamp) {
+                <tr>
+                  <td class="st-name">{{ h.story_title }}</td>
+                  <td class="mono faint">{{ jiraFor(snap, h.story_id) }}</td>
+                  <td class="mono">{{ h.average ?? '–' }}</td>
+                  <td>
+                    @if (h.consensus) { <span class="badge badge-green">Yes</span> }
+                    @else { <span class="badge badge-amber">No</span> }
+                  </td>
+                  <td><strong class="est">{{ h.final_estimate ?? '–' }}</strong></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <div class="empty" style="padding:32px; text-align:center">
+            <div style="font-size:34px; opacity:0.6">📊</div>
+            <p class="muted">No completed rounds yet. Estimates will appear here.</p>
+          </div>
+        }
+
+        <div class="row gap-12" style="margin-top:18px">
+          <button class="btn btn-ghost" (click)="export('csv')">Export CSV</button>
+          <button class="btn btn-soft" (click)="export('json')">Export JSON</button>
+          <button class="btn btn-primary grow" (click)="showSummary.set(false)">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

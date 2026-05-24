@@ -1,0 +1,113 @@
+<div class="landing">
+  <!-- Left brand panel -->
+  <aside class="brand-panel">
+    <div class="brand-top">
+      <div class="logo">
+        <span class="logo-mark">EXL</span>
+        <span class="logo-divider"></span>
+        <span class="logo-sub">Planning Poker</span>
+      </div>
+    </div>
+
+    <div class="brand-hero">
+      <h1>Estimate together.<br />Decide faster.</h1>
+      <p class="brand-tagline">
+        A real-time sprint grooming &amp; story-estimation tool for EXL teams.
+        Create a room, invite your squad, and reach consensus in minutes.
+      </p>
+
+      <ul class="brand-points">
+        <li><span class="pt-dot"></span> Real-time voting with hidden cards</li>
+        <li><span class="pt-dot"></span> Fibonacci scale with automatic consensus analysis</li>
+        <li><span class="pt-dot"></span> Story backlog, timers &amp; exportable summaries</li>
+      </ul>
+    </div>
+
+    <div class="brand-foot">Internal tool · No login required · Session-based</div>
+  </aside>
+
+  <!-- Right form panel -->
+  <main class="form-panel">
+    <button class="theme-toggle" (click)="toggleTheme()" [title]="theme === 'light' ? 'Switch to dark' : 'Switch to light'">
+      {{ theme === 'light' ? '🌙' : '☀️' }}
+    </button>
+
+    <div class="form-card card anim-fade">
+      <div class="tabs">
+        <button class="tab" [class.active]="mode() === 'create'" (click)="mode.set('create')">
+          Create Session
+        </button>
+        <button class="tab" [class.active]="mode() === 'join'" (click)="mode.set('join')">
+          Join Session
+        </button>
+      </div>
+
+      <!-- CREATE -->
+      @if (mode() === 'create') {
+        <div class="form-body col gap-16">
+          <div class="form-intro">
+            <h2>Start a new grooming session</h2>
+            <p class="muted">You'll be the Scrum Master and can manage stories &amp; voting.</p>
+          </div>
+
+          <div class="field">
+            <label>Session name</label>
+            <input class="input" [(ngModel)]="roomName" placeholder="e.g. Sprint 42 Grooming" maxlength="80" />
+          </div>
+
+          <div class="field">
+            <label>Your name</label>
+            <input class="input" [(ngModel)]="adminName" placeholder="e.g. Priya Sharma" maxlength="60" />
+          </div>
+
+          <div class="field">
+            <label>Team / Department <span class="faint">(optional)</span></label>
+            <input class="input" [(ngModel)]="team" placeholder="e.g. Platform Engineering" maxlength="80" />
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block" (click)="createRoom()" [disabled]="loading()">
+            @if (loading()) { <span class="spinner" style="width:18px;height:18px;border-width:2px"></span> Creating… }
+            @else { Create session → }
+          </button>
+        </div>
+      }
+
+      <!-- JOIN -->
+      @if (mode() === 'join') {
+        <div class="form-body col gap-16">
+          <div class="form-intro">
+            <h2>Join an existing session</h2>
+            <p class="muted">Enter the room ID shared by your Scrum Master.</p>
+          </div>
+
+          <div class="field">
+            <label>Room ID</label>
+            <input class="input mono" [(ngModel)]="joinRoomId" placeholder="e.g. a4418b0b" maxlength="40" />
+          </div>
+
+          <div class="field">
+            <label>Your name</label>
+            <input class="input" [(ngModel)]="joinName" placeholder="e.g. Arjun Mehta" maxlength="60" />
+          </div>
+
+          <div class="field">
+            <label>Your role</label>
+            <select class="select" [(ngModel)]="joinRole">
+              @for (r of roleOptions; track r.value) {
+                <option [value]="r.value">{{ r.label }}</option>
+              }
+            </select>
+            <span class="faint" style="font-size:12px">
+              Observers can watch the session but cannot cast votes.
+            </span>
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block" (click)="joinRoom()" [disabled]="loading()">
+            @if (loading()) { <span class="spinner" style="width:18px;height:18px;border-width:2px"></span> Joining… }
+            @else { Join session → }
+          </button>
+        </div>
+      }
+    </div>
+  </main>
+</div>

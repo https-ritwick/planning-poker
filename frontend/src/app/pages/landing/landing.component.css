@@ -1,0 +1,88 @@
+.landing {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: 100vh;
+}
+
+/* ---- Brand panel ---- */
+.brand-panel {
+  background:
+    radial-gradient(1200px 600px at -10% -10%, rgba(255, 255, 255, 0.16), transparent 55%),
+    radial-gradient(900px 500px at 110% 120%, rgba(0, 0, 0, 0.22), transparent 50%),
+    linear-gradient(150deg, var(--exl-orange) 0%, var(--exl-orange-dark) 100%);
+  color: #fff;
+  padding: 44px 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.logo { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+.logo-mark {
+  font-family: var(--font-display); font-weight: 800; font-size: 26px;
+  letter-spacing: 0.04em; background: #fff; color: var(--exl-orange-dark);
+  padding: 4px 12px; border-radius: 8px;
+}
+.logo-divider { width: 1px; height: 26px; background: rgba(255, 255, 255, 0.4); }
+.logo-sub { font-family: var(--font-display); font-weight: 600; font-size: 17px; opacity: 0.95; }
+
+.brand-hero { position: relative; z-index: 1; }
+.brand-hero h1 {
+  color: #fff; font-size: 46px; line-height: 1.08; font-weight: 800;
+  margin-bottom: 18px; letter-spacing: -0.02em;
+}
+.brand-tagline { font-size: 16px; line-height: 1.6; opacity: 0.92; max-width: 440px; margin: 0 0 28px; }
+
+.brand-points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.brand-points li { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 500; opacity: 0.96; }
+.pt-dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.22); flex-shrink: 0; }
+
+.brand-foot { position: relative; z-index: 1; font-size: 13px; opacity: 0.78; letter-spacing: 0.01em; }
+
+/* ---- Form panel ---- */
+.form-panel {
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px; position: relative; background: var(--bg);
+}
+.theme-toggle {
+  position: absolute; top: 24px; right: 24px;
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+.theme-toggle:hover { border-color: var(--exl-orange); }
+
+.form-card { width: 100%; max-width: 440px; overflow: hidden; box-shadow: var(--shadow-lg); }
+
+.tabs { display: flex; border-bottom: 1px solid var(--border); }
+.tab {
+  flex: 1; padding: 16px; background: transparent; border: none;
+  font-size: 14.5px; font-weight: 600; color: var(--text-muted);
+  border-bottom: 2.5px solid transparent; transition: all 0.18s ease;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--exl-orange-dark); border-bottom-color: var(--exl-orange); background: var(--exl-orange-50); }
+
+.form-body { padding: 28px; }
+.form-intro h2 { font-size: 21px; margin-bottom: 6px; }
+.form-intro p { font-size: 14px; margin: 0; }
+
+@media (max-width: 900px) {
+  .landing { grid-template-columns: 1fr; }
+  .brand-panel { padding: 32px; min-height: auto; }
+  .brand-hero h1 { font-size: 32px; }
+  .brand-points { display: none; }
+  .form-panel { padding: 24px 16px; }
+}
